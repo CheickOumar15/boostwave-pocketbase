@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2021"],
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2017",
+    "module": "ES2015",
+    "moduleResolution": "node",
+    "downlevelIteration": true,
+    "noUncheckedIndexedAccess": true,
+    "strictNullChecks": true,
+    "noEmit": true
+  },
+  "include": ["./src"]
+}
