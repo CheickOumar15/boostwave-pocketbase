@@ -32,4 +32,12 @@ interface AppService {
   type: string;
 }
 
-export { N1PanelService, AppCategory, AppService };
+enum AppCommandeStatus {
+  INITIAL = "initiated",
+  PAID = "paid",
+  PENDING = "pending",
+  PROCESSING = "processing",
+  COMPLETED = "completed",
+  CANCELLED = "canceled",
+}
+export { N1PanelService, AppCategory, AppService, AppCommandeStatus };

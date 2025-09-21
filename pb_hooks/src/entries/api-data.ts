@@ -1,4 +1,5 @@
 import { APP_COLLECTIONS } from "./constants";
+import { AppCommandeStatus } from "./types";
 
 const getPlatformTypes = (c: core.RequestEvent) => {
   try {
@@ -66,7 +67,71 @@ const getCategoryServices = (c: core.RequestEvent) => {
     total: returnServices.length,
   });
 };
-export { getPlatformTypes, getCategoryServices };
+
+const trackTicket = (c: core.RequestEvent) => {
+  const ticket = c.request?.url?.query().get("ticket");
+  if (!ticket)
+    return c.json(400, {
+      error: true,
+      message: "Ticket introuvable",
+    });
+  try {
+    const ticketRecord = $app.findFirstRecordByData(
+      APP_COLLECTIONS.COMMANDES.collection(),
+      "cmd_id",
+      ticket
+    );
+    if (!ticketRecord)
+      return c.json(404, {
+        error: true,
+        message: "Ticket non trouvé",
+      });
+    const commandeLogs = $app.findAllRecords(
+      APP_COLLECTIONS.COMMANDES_LOGS.collection(),
+      $dbx.exp("commande = {:commande}", {
+        commande: ticketRecord.id,
+      })
+    ) as core.Record[];
+    const service = $app.findFirstRecordByData(
+      APP_COLLECTIONS.SERVICE_CATEGORIES.collection(),
+      "id",
+      ticketRecord.getString("service")
+    );
+    if (!service)
+      return c.json(404, {
+        error: true,
+        message: "Service non trouvé",
+      });
+    return c.json(200, {
+      ticketNumber: ticketRecord.getString("cmd_id"),
+      status: ticketRecord.getString("status"),
+      createdAt: ticketRecord.getDateTime("created")?.toString(),
+      updatedAt: ticketRecord.getDateTime("updated")?.toString(),
+      service: {
+        id: service.getString("id"),
+        name: service.getString("name"),
+        platform: service.getString("platform"),
+        type: service.getString("type"),
+        category: service.getString("category_name"),
+        price_per_1k: service.getInt("price"),
+      },
+      quantity: ticketRecord.getInt("quantity"),
+      url: ticketRecord.getString("target_link"),
+      total: service.getInt("price") * (ticketRecord.getInt("quantity") / 1000),
+      history: commandeLogs.map((log) => ({
+        status: log.getString("status"),
+        note: log.getString("note"),
+        at: log.getDateTime("created")?.toString(),
+      })),
+    });
+  } catch (error) {
+    return c.json(400, {
+      error: true,
+      message: "Ticket Invalide",
+    });
+  }
+};
+export { getPlatformTypes, getCategoryServices, trackTicket };
 
 const run = () => {
   routerAdd(`GET`, `/api/data/categories/{platform}`, (c: core.RequestEvent) =>
@@ -78,6 +143,67 @@ const run = () => {
     (c: core.RequestEvent) =>
       require(`${__hooks}/api-data.js`).getCategoryServices(c)
   );
+  routerAdd("GET", "/api/data/track-ticket", (c: core.RequestEvent) =>
+    require(`${__hooks}/api-data.js`).trackTicket(c)
+  );
+  onRecordAfterUpdateSuccess((e: core.RecordEvent) => {
+    e.next();
+    const record = e.record;
+    if (!record) return;
+    const recordLog = new Record(
+      $app.findCollectionByNameOrId("boostwave_commande_logs")
+    );
+    const cmd_id = record.getString("cmd_id");
+    recordLog.set("commande", record.id);
+    recordLog.set("status", record.getString("status"));
+    switch (record.getString("status") as AppCommandeStatus) {
+      case AppCommandeStatus.INITIAL:
+        recordLog.set(
+          "note",
+          `La commande ${cmd_id} a ete initiee avec succes`
+        );
+        break;
+      case AppCommandeStatus.PAID:
+        recordLog.set("note", `La commande ${cmd_id} a ete payee avec succes`);
+        break;
+      case AppCommandeStatus.PENDING:
+        recordLog.set(
+          "note",
+          `La commande ${cmd_id} est en attente de  traitement`
+        );
+        break;
+      case AppCommandeStatus.PROCESSING:
+        recordLog.set(
+          "note",
+          `La commande ${cmd_id} est en cours de traitement`
+        );
+        break;
+      case AppCommandeStatus.COMPLETED:
+        recordLog.set(
+          "note",
+          `La commande ${cmd_id} a ete traitee avec succes`
+        );
+        break;
+      case AppCommandeStatus.CANCELLED:
+        recordLog.set("note", `La commande ${cmd_id} a ete annuler`);
+        break;
+    }
+    $app.save(recordLog);
+  }, "boostwave_commande");
+  onRecordAfterCreateSuccess((e: core.RecordEvent) => {
+    e.next();
+    const record = e.record;
+    if (!record) return;
+    record.set(
+      "cmd_id",
+      `BW-${new Date()
+        .toISOString()
+        .split("T")[0]
+        ?.replaceAll("-", "")}-${$security.randomString(6).toUpperCase()}`
+    );
+    record.set("status", AppCommandeStatus.INITIAL);
+    $app.save(record);
+  }, "boostwave_commande");
 };
 
 export { run };

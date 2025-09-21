@@ -12,6 +12,14 @@ const APP_COLLECTIONS = {
     collection: () =>
       $app.findCollectionByNameOrId("boostwave_service_category"),
   },
+  COMMANDES: {
+    name: "boostwave_commande",
+    collection: () => $app.findCollectionByNameOrId("boostwave_commande"),
+  },
+  COMMANDES_LOGS: {
+    name: "boostwave_commande_logs",
+    collection: () => $app.findCollectionByNameOrId("boostwave_commande_logs"),
+  },
 };
 enum APP_SERVICES_TYPES {
   Default = "Default",
