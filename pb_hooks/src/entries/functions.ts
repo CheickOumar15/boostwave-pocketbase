@@ -192,6 +192,21 @@ const createServices = (
   }
 };
 
+const getBenetPayedToken = () => {
+  const env = loadEnvFile();
+  const BENETPAYED_BEARER_CONSTANT = env["BENETPAYED_BEARER_CONSTANT"];
+  try {
+    const constantRecord = $app.findRecordById(
+      APP_COLLECTIONS.CONSTANTS.collection(),
+      BENETPAYED_BEARER_CONSTANT!
+    );
+    const value = constantRecord!.getString("value_string");
+    return value.trim().length == 0 ? null : value;
+  } catch (error) {
+    return null;
+  }
+};
+
 export {
   loadEnvFile,
   convertN1PanelServiceToAppService,
@@ -199,4 +214,5 @@ export {
   AppCategoryFromRecord,
   createAppCategoriesUnique,
   createServices,
+  getBenetPayedToken,
 };

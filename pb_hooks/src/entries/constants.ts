@@ -20,6 +20,15 @@ const APP_COLLECTIONS = {
     name: "boostwave_commande_logs",
     collection: () => $app.findCollectionByNameOrId("boostwave_commande_logs"),
   },
+  CONSTANTS: {
+    name: "boostwave_constants",
+    collection: () =>
+      $app.findCachedCollectionByNameOrId("boostwave_constants"),
+  },
+  PAYMENTS: {
+    name: "boostwave_payment",
+    collection: () => $app.findCachedCollectionByNameOrId("boostwave_payment"),
+  },
 };
 enum APP_SERVICES_TYPES {
   Default = "Default",

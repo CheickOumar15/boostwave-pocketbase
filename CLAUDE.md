@@ -17,6 +17,8 @@ cd pb_hooks && yarn build
 cd pb_hooks && yarn dev
 ```
 
+**Note**: The `dev` script has a typo - it calls `yarn build:hooks` but should be `yarn build`. The script watches `./src/hooks/**` directory but the actual source files are in `./src/entries/`.
+
 ### Runtime
 ```bash
 # Start PocketBase server
@@ -72,8 +74,9 @@ TikTok, Instagram, Telegram, YouTube, Twitter, Facebook, VK, Twitch, LinkedIn, S
 │   │   │   ├── api-config.ts  # N1Panel sync logic
 │   │   │   ├── api-data.ts   # API endpoints
 │   │   │   ├── constants.ts  # Collections and enums
-│   │   │   └── types.ts      # TypeScript interfaces
-│   │   └── lib.ts           # Utility functions
+│   │   │   ├── functions.ts  # Utility functions
+│   │   │   ├── types.ts      # TypeScript interfaces
+│   │   │   └── index.pb.ts   # Main hook entry point
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── tsup.config.js
@@ -114,3 +117,29 @@ The PocketBase server expects:
 - Compiled hooks in `hooks/` directory
 - Migrations in `migrations/` directory
 - Static files in `dir/` directory
+
+### Environment Variables
+Required environment variables should be set in `hooks/.env`:
+```bash
+N1PANEL_API_KEY=your_api_key_here
+N1PANEL_API_URL=https://your-panel-url.com
+```
+
+## Development Notes
+
+### TypeScript Configuration
+- ES2017 target with ES2021 lib
+- Strict mode enabled with null checks
+- NoEmit: true (bundled via tsup)
+- Module: ES2015 with Node module resolution
+
+### Build Process
+- Uses `tsup` for bundling TypeScript to JavaScript
+- Output directory: `/hooks/`
+- Entry points: `src/entries/*.ts`
+- Minimal bundling configuration (no external dependencies by default)
+
+### File Watching
+- Uses `chokidar-cli` for development
+- Watches `./src/hooks/**` directory (note: may need correction to `./src/entries/**`)
+- Automatically rebuilds on changes via `yarn build`
