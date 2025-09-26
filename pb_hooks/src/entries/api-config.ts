@@ -79,6 +79,7 @@ const run = () => {
     e.next();
 
     require(`${__hooks}/api-config.js`).syncN1PanelServices();
+    require(`${__hooks}/api-config.js`).dryBenetpayedAccessToken();
   });
 };
 
